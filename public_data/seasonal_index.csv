@@ -1,0 +1,13 @@
+Month,Seasonal_Index,Description
+January,0.75,淡季
+February,0.72,淡季
+March,0.85,淡季
+April,0.95,平季
+May,1.05,平季
+June,1.15,旺季前期
+July,1.35,旺季
+August,1.42,旺季高峰
+September,1.2,旺季后期
+October,1.0,平季
+November,0.8,淡季
+December,0.76,淡季
