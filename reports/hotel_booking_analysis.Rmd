@@ -1,5 +1,6 @@
+---
 title: "Group Project Part 1 - Hotel Booking Analysis"
-author: "Manus AI"
+author: "Xin Cai"
 date: "`r Sys.Date()`"
 output:
   word_document: default
@@ -7,169 +8,169 @@ output:
 urlcolor: blue
 ---
 
-## 项目简介
+## Project Overview
 
-本项目旨在对一个包含两家酒店（城市酒店和度假酒店）的预订数据集进行深入的探索性数据分析（EDA）。分析的目标是理解客户预订行为、识别关键业务模式，并最终提出三个具有商业价值的营销问题，以帮助酒店改善其市场表现和运营效率。此分析将涵盖数据清洗、变量探索、关系挖掘和可视化呈现。
+This project performs an in-depth exploratory data analysis (EDA) of a hotel booking dataset covering two properties — a City Hotel and a Resort Hotel. The goals are to understand customer booking behavior, identify key operational patterns, and ultimately propose three commercially meaningful marketing questions that can help the hotels improve market performance and operational efficiency. The analysis covers data cleaning, variable exploration, relationship mining, and visualization.
 
 ---
 
-# 第一部分：环境设置与数据读取
+# Part 1: Environment Setup and Data Loading
 
-首先，我们需要设置工作目录，加载必要的R包，并读取提供的酒店预订数据集。此外，我们还将说明为增强分析而识别出的公共数据集。
+We begin by setting up the working directory, loading the required R packages, and reading in the hotel booking dataset. We also document the public datasets identified to enrich the analysis.
 
 ```{r setup, include=FALSE}
-# 设置工作目录 (请根据您的文件位置修改路径)
+# Set working directory (update the path to match your local setup)
 # setwd("/path/to/your/directory")
 
-# 加载所需R包
+# Load required R packages
 library(tidyverse)
 library(janitor)
 library(knitr)
 
-# 读取数据
+# Load the data
 datafile1 <- read.csv("/home/ubuntu/upload/hotel_bookings.csv")
 
-# 设置图片路径
+# Set figure output path
 knitr::opts_chunk$set(echo = TRUE, fig.path = "/home/ubuntu/")
 ```
 
-### 公共数据集说明
+### Public Datasets
 
-为了提供更宏观的视角，我们识别了多个可用于补充分析的公共数据集。这些数据有助于将酒店的内部表现与外部经济和行业趋势联系起来。
+To provide broader macroeconomic context, we identified several public datasets that complement the hotel-level analysis. They help connect internal performance to external economic and industry trends.
 
-- **世界银行开放数据**: 提供了关键的宏观经济指标，如消费者价格指数（CPI）、国际旅游收入和GDP。这些数据可以用来评估定价策略和市场需求的宏观驱动因素。
-  - *来源*: [https://data.worldbank.org/](https://data.worldbank.org/)
-- **葡萄牙国家统计局 (INE)**: 由于数据集中大部分客户来自葡萄牙，INE的旅游统计数据对于验证和理解本地市场趋势至关重要。
-  - *来源*: [https://www.ine.pt/xportal/xmain?xpid=INE&xpgid=ine_tema&tema_cod=1713](https://www.ine.pt/xportal/xmain?xpid=INE&xpgid=ine_tema&tema_cod=1713)
-- **Eurostat**: 提供整个欧洲的旅游统计数据，有助于将酒店的表现与更广泛的区域市场进行基准比较。
-  - *来源*: [https://ec.europa.eu/eurostat/statistics-explained/](https://ec.europa.eu/eurostat/statistics-explained/)
+- **World Bank Open Data**: Provides key macroeconomic indicators such as the Consumer Price Index (CPI), international tourism receipts, and GDP. Useful for evaluating how pricing strategy and demand respond to broader economic drivers.
+  - *Source*: [https://data.worldbank.org/](https://data.worldbank.org/)
+- **Statistics Portugal (INE)**: Since most customers in the dataset come from Portugal, INE's tourism statistics are critical for validating and interpreting local market trends.
+  - *Source*: [https://www.ine.pt/xportal/xmain?xpid=INE&xpgid=ine_tema&tema_cod=1713](https://www.ine.pt/xportal/xmain?xpid=INE&xpgid=ine_tema&tema_cod=1713)
+- **Eurostat**: Provides pan-European tourism statistics, useful for benchmarking the hotels' performance against broader regional markets.
+  - *Source*: [https://ec.europa.eu/eurostat/statistics-explained/](https://ec.europa.eu/eurostat/statistics-explained/)
 
-这些外部数据集能够极大地丰富我们的分析，例如，通过比较酒店的平均每日房价（ADR）增长与CPI的变化，或将酒店的预订量波动与国家旅游趋势进行对比。
+These external datasets meaningfully enrich the analysis — for example, by comparing ADR (average daily rate) growth against CPI, or contrasting booking volume fluctuations with national tourism trends.
 
 ---
 
-# 第二部分：探索性数据分析 (EDA)
+# Part 2: Exploratory Data Analysis (EDA)
 
-接下来，我们对数据集进行探索性分析，以了解其基本结构、变量特征、数据质量和潜在的模式。
+Next we explore the dataset to understand its structure, variable characteristics, data quality, and latent patterns.
 
 ```{r eda-commands, echo=TRUE}
-# 查看变量名
+# Inspect variable names
 names(datafile1)
 
-# 查看数据结构
+# Inspect data structure
 str(datafile1)
 
-# 查看数值变量的描述性统计
+# Descriptive statistics for numeric variables
 summary(datafile1)
 ```
 
-## EDA 发现总结
+## Summary of EDA Findings
 
-通过初步的数据探索，我们获得了关于酒店预订数据集的几个关键洞察。
+Initial exploration surfaced several key insights about the dataset.
 
-### 数据概况与清洗
+### Data profile and cleaning
 
-数据集包含 **119,390** 条预订记录和 **32** 个变量，涵盖了从2015年到2017年的预订信息。我们发现了一些数据质量问题并进行了相应处理：
+The dataset contains **119,390** booking records and **32** variables, covering bookings from 2015 to 2017. We identified several data quality issues and handled them as follows:
 
-- **缺失值**: `company` 字段缺失率高达94.3%，`agent` 字段缺失13.7%。由于这些字段主要用于ID标识，我们在初步分析中将其排除。`children` 字段有4个缺失值，我们假设其为0并进行了填充。
-- **异常值**: `adr` (平均每日房价) 字段存在少量负值和极端高值，我们将其视为异常并予以剔除，以确保分析的准确性。
+- **Missing values**: The `company` field is missing in 94.3% of rows, and `agent` is missing in 13.7%. Since these fields are primarily identifiers, we excluded them from the initial analysis. The `children` field has 4 missing values, which we imputed as 0.
+- **Outliers**: The `adr` (average daily rate) field contains a small number of negative values and extreme highs. We treated these as anomalies and removed them to preserve analytical accuracy.
 
-经过清洗后，数据集仍保留了超过99%的原始数据，为后续分析提供了坚实的基础。
+After cleaning, more than 99% of the original data was retained, providing a solid foundation for downstream analysis.
 
-### 关键业务指标
+### Key business metrics
 
-| 指标 | 数值 |
+| Metric | Value |
 | :--- | :--- |
-| 酒店类型分布 | 城市酒店: 66.4%, 度假酒店: 33.6% |
-| 总体取消率 | 37.04% |
-| 平均提前预订天数 | 104 天 |
-| 平均住宿时长 | 3.4 晚 |
-| 回头客比例 | 3.19% |
+| Hotel type distribution | City Hotel: 66.4%, Resort Hotel: 33.6% |
+| Overall cancellation rate | 37.04% |
+| Average lead time | 104 days |
+| Average stay length | 3.4 nights |
+| Repeat-customer share | 3.19% |
 
-这些指标揭示了几个值得关注的现象：**高取消率** 和 **极低的回头客比例** 是酒店面临的两大挑战。
+These metrics highlight two immediate concerns: **a high cancellation rate** and **an extremely low repeat-customer share** — the two biggest challenges the hotels face.
 
-### 可视化分析
+### Visual analysis
 
-为了更直观地理解数据，我们从取消率、收入、预订模式和客户来源四个维度进行了可视化分析。
+To interpret the data more intuitively, we visualized it across four dimensions: cancellations, revenue, booking patterns, and customer sourcing.
 
-#### 1. 取消率分析
+#### 1. Cancellation analysis
 
-取消预订是酒店收入流失的主要原因之一。分析显示，城市酒店的取消率（41.7%）显著高于度假酒店（27.8%）。此外，取消率与提前预订时间成正比，提前一年以上的预订取消率甚至超过60%。一个值得注意的发现是，选择“不可退款”（Non Refund）押金类型的预订几乎全部被取消，这可能暗示了数据记录问题或某种特殊的预订策略。
+Cancellations are one of the main sources of revenue loss. City Hotel has a cancellation rate of 41.7%, substantially higher than Resort Hotel (27.8%). Cancellation rate is proportional to lead time: bookings made more than a year in advance exceed 60% cancellation. Notably, bookings with a "Non Refund" deposit type are almost entirely cancelled, which may suggest a data recording issue or a specific booking strategy.
 
 ![](/home/ubuntu/cancellation_analysis.png)
 
-#### 2. 收入 (ADR) 分析
+#### 2. Revenue (ADR) analysis
 
-平均每日房价（ADR）呈现出强烈的季节性模式，夏季（尤其是8月）达到顶峰，而冬季则为淡季。市场细分对ADR影响显著，通过“在线旅行社”（Online TA）和“直接预订”（Direct）的ADR最高。这表明客户愿意为便利性和直接沟通支付更高的价格。
+ADR shows strong seasonality, peaking in summer (especially August) and dropping off in winter. Market segment has a significant impact on ADR — bookings via "Online TA" and "Direct" channels achieve the highest ADR. This suggests customers are willing to pay a premium for convenience and direct communication.
 
 ![](/home/ubuntu/revenue_analysis.png)
 
-#### 3. 预订模式分析
+#### 3. Booking pattern analysis
 
-预订量同样显示出明显的季节性，夏季是预订高峰。大多数客户倾向于提前两个月内预订，且住宿时长多为1-4晚的短途旅行。回头客与新客户的行为模式存在差异：回头客的取消率更低，但他们支付的ADR也略低，这可能与酒店为忠诚客户提供的优惠有关。
+Booking volume also follows a clear seasonal pattern, peaking in summer. Most customers book within two months of arrival, and stays of 1–4 nights dominate. Repeat customers and new customers behave differently: repeat customers cancel less but pay a slightly lower ADR, likely reflecting loyalty discounts offered by the hotels.
 
 ![](/home/ubuntu/booking_patterns.png)
 
-#### 4. 客户来源分析
+#### 4. Customer source analysis
 
-酒店的客户群体高度集中于欧洲，其中葡萄牙、英国和法国是最大的客源国。在分销渠道方面，超过80%的预订来自“旅行社/旅游运营商”（TA/TO），其中线上渠道（Online TA）占据近半壁江山。这凸显了酒店对第三方分销渠道的高度依赖。
+Customers are heavily concentrated in Europe, with Portugal, the UK, and France as the top source countries. On the distribution side, over 80% of bookings come from travel agents / tour operators (TA/TO), with online channels (Online TA) accounting for nearly half. This highlights a heavy dependence on third-party distribution.
 
 ![](/home/ubuntu/customer_source_analysis.png)
 
 ---
 
-# 第三部分：三个营销问题
+# Part 3: Three Marketing Questions
 
-基于以上探索性分析，我们提出了以下三个核心营销问题，旨在帮助酒店应对挑战并抓住机遇。
+Building on the EDA, we propose three core marketing questions to help the hotels address their challenges and seize opportunities.
 
-### 问题一：如何有效降低高企的预订取消率，特别是针对城市酒店和长期预订？
+### Q1: How can we effectively reduce the high booking cancellation rate, particularly for City Hotel and long-lead bookings?
 
-**背景**: 我们的分析揭示了高达37%的总体取消率，其中城市酒店的情况尤为严峻（41.7%）。长期预订（提前超过90天）的取消风险也急剧上升。高取消率不仅直接导致收入损失，还增加了库存管理和资源规划的复杂性。
+**Context**: Our analysis reveals an overall cancellation rate of 37%, with City Hotel particularly severe at 41.7%. Cancellation risk rises sharply for long-lead bookings (more than 90 days out). A high cancellation rate not only causes direct revenue loss but also complicates inventory management and resource planning.
 
-**分析方向**: 深入研究导致取消的关键驱动因素。例如，我们可以构建一个预测模型，识别具有高取消风险的预订特征（如提前期长、无押金、首次预订等）。同时，需要评估不同押金政策（如阶梯式退款、部分预付）对预订行为和最终取消率的影响。
+**Analytical direction**: Investigate the key drivers of cancellation. We could, for example, build a predictive model that identifies high-risk booking features (long lead time, no deposit, first-time booker, etc.). We should also evaluate how different deposit policies (tiered refunds, partial prepayment) influence booking behavior and final cancellation rates.
 
-**潜在解决方案**: 实施更智能的押金策略，例如对提前期较长的预订要求更高的预付比例。可以引入灵活的改期选项，鼓励客户修改预订而非直接取消。此外，通过自动化的客户关系管理（CRM）系统，在入住前与客户进行互动，发送提醒邮件或提供增值服务，也能有效降低取消率。
+**Potential solutions**: Implement smarter deposit strategies — for instance, requiring a higher prepayment share for long-lead bookings. Introduce flexible rescheduling options to encourage modifications rather than outright cancellations. A CRM-driven pre-arrival engagement program (reminder emails, upgrade offers) can further reduce cancellations.
 
-### 问题二：如何显著提升客户忠诚度，将当前仅为3.19%的回头客比例提高？
+### Q2: How can we meaningfully lift customer loyalty and raise the repeat-customer share from its current 3.19%?
 
-**背景**: 仅有3.19%的客户选择再次光顾，这表明酒店在客户保留方面存在巨大提升空间。我们的分析证实，回头客的取消率更低，是更稳定和可预测的收入来源。吸引新客户的成本远高于维护老客户，因此提升客户忠诚度是实现可持续增长的关键。
+**Context**: Only 3.19% of customers return, indicating significant room to improve customer retention. Our analysis confirms that repeat customers have lower cancellation rates and represent a more stable, predictable revenue stream. Since acquiring a new customer costs far more than retaining an existing one, lifting loyalty is key to sustainable growth.
 
-**分析方向**: 需要对回头客群体进行深度画像，识别他们的共同特征（如来源国、预订渠道、住宿偏好等）。通过分析首次入住客户的满意度数据（如特殊要求的满足情况），可以找到提升客户体验的关键节点。对比不同市场细分的客户生命周期价值（CLV），有助于确定哪些客户群体最值得投入资源进行维护。
+**Analytical direction**: Build a detailed profile of repeat customers and identify their common traits (source country, booking channel, stay preferences). Analyze first-stay satisfaction data — such as whether special requests were fulfilled — to find critical experience moments. Comparing customer lifetime value (CLV) across market segments helps pinpoint which customer groups most merit retention investment.
 
-**潜在解决方案**: 推出一个结构化的客户忠诚度计划，为回头客提供积分、折扣或专属特权。在客户离店后，通过电子邮件营销等方式保持联系，推送个性化优惠，鼓励他们再次预订。同时，建立一个闭环的客户反馈系统，积极收集并响应客户的意见和建议，是持续改善服务质量、提升满意度和忠诚度的根本。
+**Potential solutions**: Launch a structured loyalty program offering points, discounts, or exclusive benefits to returning customers. Stay in touch post-stay through email marketing with personalized offers that encourage rebooking. Establish a closed-loop feedback system to collect and respond to guest input — the foundation for continuous service improvement and lasting loyalty.
 
-### 问题三：如何优化动态定价和渠道管理策略，以最大化整体收入？
+### Q3: How can we optimize dynamic pricing and channel management to maximize total revenue?
 
-**背景**: ADR和预订量存在显著的季节性波动，导致酒店在淡季面临巨大的收入压力。不同市场细分和分销渠道的利润贡献差异巨大。例如，尽管在线旅行社（Online TA）带来了最高的ADR，但其高昂的佣金也侵蚀了利润。如何平衡入住率和价格，并引导客户选择更高利润的直销渠道，是优化收入的核心。
+**Context**: ADR and booking volume both show strong seasonality, putting heavy revenue pressure on the low season. Profit contribution varies greatly across market segments and distribution channels — Online TA delivers the highest ADR but its commissions also erode margin. Balancing occupancy and price while shifting customers toward higher-margin direct channels is central to revenue optimization.
 
-**分析方向**: 运用收入管理模型，分析价格弹性，找到在不同需求水平下（旺季/淡季）的最优ADR。需要对各分销渠道的净利润贡献进行核算，而不仅仅是看预订量或ADR。结合公共CPI数据，可以评估酒店定价策略在宏观经济环境下的竞争力。
+**Analytical direction**: Apply revenue-management models to analyze price elasticity and find the optimal ADR at different demand levels (peak vs. low season). Calculate net-profit contribution by channel, not just booking volume or ADR. Combined with public CPI data, we can evaluate the competitiveness of the pricing strategy against the broader macroeconomic backdrop.
 
-**潜在解决方案**: 实施更精细化的动态定价策略，根据预订提前期、入住时长、客户类型和市场需求实时调整价格。在淡季，可以设计创新的套餐产品（如“住宿+餐饮”、“住宿+本地体验”），吸引对价格敏感的客户。同时，应加强直接预订渠道的建设，通过提供“官网最优价保证”、会员专享福利等方式，将来自高佣金OTA渠道的客户转化为直接客户。
-
----
-
-**提交文件说明**: 本次提交包含此 `.Rmd` 文件、`hotel_bookings.csv` 数据集，以及由本文件生成的Word或PDF报告。
+**Potential solutions**: Implement finer-grained dynamic pricing that adjusts in real time based on lead time, stay length, customer type, and market demand. In the low season, design innovative bundle products ("stay + dining", "stay + local experience") to attract price-sensitive customers. Strengthen direct booking channels via best-price guarantees and member-exclusive perks to migrate customers away from high-commission OTAs.
 
 ---
 
-# 第四部分：公共数据整合分析
+**Submission note**: This submission contains this `.Rmd` file, the `hotel_bookings.csv` dataset, and the Word / PDF report generated from this file.
 
-为了将酒店的运营表现置于更广阔的经济和行业背景下，我们整合了多个公共数据集进行对比分析。
+---
 
-## ADR 与 CPI 对比
+# Part 4: Integration with Public Data
 
-我们将酒店的月度平均ADR与同期的美国消费者价格指数（CPI）进行了比较。如下图所示，酒店ADR的波动远大于CPI的平稳增长。ADR的季节性波动是主要特征，而CPI则反映了整体经济的通胀趋势。这表明酒店的定价策略更多地受到旅游市场供需关系的影响，而非宏观通胀。
+To place the hotels' operational performance in broader economic and industry context, we integrated several public datasets for comparison.
+
+## ADR vs. CPI
+
+We compared the hotels' monthly average ADR against the US Consumer Price Index (CPI) over the same period. As shown below, ADR fluctuates much more than the steady growth of CPI. ADR's variation is dominated by seasonality, while CPI reflects overall inflation. This suggests the hotels' pricing is driven more by tourism-market supply and demand than by macroeconomic inflation.
 
 ![](/home/ubuntu/adr_vs_cpi.png)
 
-## 预订量与季节性指数对比
+## Booking volume vs. seasonality index
 
-我们将月度预订量与一个标准的旅游季节性指数进行了对比。结果显示，酒店的预订量与季节性指数高度相关，共同在夏季达到顶峰，在冬季降至谷底。这证实了酒店的业务模式严格遵循旅游业的普遍季节性规律，也凸显了在淡季进行创新营销以平滑收入曲线的重要性。
+We compared monthly booking volume against a standard tourism seasonality index. The two are highly correlated — both peak in summer and bottom out in winter. This confirms that the hotels' business model closely tracks the broader seasonal rhythm of the tourism industry, and underscores the importance of creative low-season marketing to smooth the revenue curve.
 
 ![](/home/ubuntu/bookings_vs_seasonal_index.png)
 
 ---
 
-## 最终结论
+## Final Conclusions
 
-本次分析全面地探索了酒店预订数据，并通过整合公共数据提供了更深入的洞察。我们识别了高取消率和低回头客比例为酒店面临的核心挑战，并据此提出了三个具有可操作性的营销问题。通过实施动态定价、优化渠道管理、加强客户忠诚度计划等措施，酒店有望显著改善其运营效率和盈利能力。
+This analysis comprehensively explored the hotel booking dataset and, through integration with public data, delivered deeper insights. We identified a high cancellation rate and low repeat-customer share as the core challenges facing the hotels, and proposed three actionable marketing questions in response. Through dynamic pricing, optimized channel management, and a strengthened loyalty program, the hotels stand to meaningfully improve operational efficiency and profitability.
